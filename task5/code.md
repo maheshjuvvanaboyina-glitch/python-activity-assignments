@@ -1,23 +1,23 @@
 ## Problem Statement
 
-Develop a multi-plan telecommunications cost optimization system. Given a user's projected monthly usage (voice minutes, SMS count, data consumption in GB), budget limit, and a catalog of available mobile plans (each with base price, inclusive allowances, validity period, and out-of-quota excess charges), the system must evaluate eligibility against budget and validity constraints, calculate total costs including any excess usage fees, and identify the most economical eligible plan.
+Develop an automated railway fare and reservation calculation system. The system must compute base ticket fares using progressive distance slabs and travel class multipliers for multiple passengers. It must apply age-based concessions, add mandatory reservation and dynamic service fees, compute total passenger totals, and calculate applicable cancellation penalties upon request.
 
 ---
 
 ## Algorithm
 
-1. **Input**: Receive user usage requirements (voice, sms, data), budget constraint, and a list of available mobile plans.
-2. **Eligibility Filtering**: Iterate through each plan and check if its base price is within the user's budget.
-3. **Cost Calculation for Eligible Plans**:
-* Compute excess voice minutes: $\max(0, \text{user\_voice} - \text{plan\_voice})$.
-* Compute excess SMS: $\max(0, \text{user\_sms} - \text{plan\_sms})$.
-* Compute excess data: $\max(0, \text{user\_data} - \text{plan\_data})$.
-* Calculate total excess charges by multiplying excess units by their respective per-unit rates.
-* Determine the total monthly cost: $\text{Base Price} + \text{Total Excess Charges}$.
+1. **Input**: Receive passenger details (name, age, travel class, distance in kilometers, cancellation status), distance fare slabs, class multipliers, concession rules, and fixed reservation charges.
+2. **Base Fare Calculation**:
+* Compute base fare by traversing distance slabs and multiplying by the appropriate travel class factor.
 
 
-4. **Optimization Selection**: Compare the total costs of all eligible plans and select the one with the minimum total cost.
-5. **Output**: Return the cost breakdown for all evaluated plans and the details of the most economical eligible plan.
+3. **Concession & Fees Application**:
+* Apply age-based concessions (e.g., Senior Citizen, Child).
+* Add fixed reservation fees and surcharges.
+
+
+4. **Cancellation Processing**: If a passenger requests cancellation, calculate the penalty fee based on the fare rules.
+5. **Output**: Return itemized passenger fare statements, net payable amounts, and cancellation charges.
 
 ---
 
@@ -25,19 +25,20 @@ Develop a multi-plan telecommunications cost optimization system. Given a user's
 
 ```mermaid
 flowchart TD
-    A[Start: Input Usage & Plans] --> B[Loop Through Each Plan]
-    B --> C{Base Price <= Budget?}
-    C -- No --> D[Mark Plan Ineligible]
-    C -- Yes --> E[Calculate Excess Usage Fees]
-    E --> F[Compute Total Plan Cost]
-    D --> G{More Plans?}
+    A[Start: Input Passenger Data & Slabs] --> B[Calculate Slab-based Distance Fare]
+    B --> C[Apply Travel Class Multiplier]
+    C --> D{Check Age & Category Concessions}
+    D -->|Senior / Child| E[Apply Percentage Discount]
+    D -->|Regular| F[No Discount Applied]
+    E --> G[Add Fixed Reservation Fees]
     F --> G
-    G -- Yes --> B
-    G -- No --> H[Find Minimum Cost Eligible Plan]
-    H --> I[End: Output Most Economical Plan]
+    G --> H{Is Cancelled?}
+    H -->|Yes| I[Calculate Cancellation Penalty]
+    H -->|No| J[Finalize Net Payable Fare]
+    I --> K[End: Output Ticket Statement]
+    J --> K
 
 ```
-
 
 
 ---
@@ -46,43 +47,22 @@ flowchart TD
 
 ```json
 {
-  "usage": {
-    "voice": 450,
-    "sms": 150,
-    "data": 12.0
+  "distance_slabs": [
+    [100, 1.5],
+    [400, 1.2],
+    [null, 0.9]
+  ],
+  "class_multipliers": {
+    "Sleeper": 1.0,
+    "AC_3Tier": 2.5,
+    "AC_1Tier": 4.0
   },
-  "budget": 600.0,
-  "plans": [
-    {
-      "name": "Basic Saver",
-      "base_price": 300.0,
-      "inclusive_voice": 300,
-      "inclusive_sms": 100,
-      "inclusive_data": 5.0,
-      "rate_voice": 1.5,
-      "rate_sms": 0.5,
-      "rate_data": 20.0
-    },
-    {
-      "name": "Standard Flex",
-      "base_price": 450.0,
-      "inclusive_voice": 500,
-      "inclusive_sms": 200,
-      "inclusive_data": 10.0,
-      "rate_voice": 1.0,
-      "rate_sms": 0.4,
-      "rate_data": 15.0
-    },
-    {
-      "name": "Unlimited Pro",
-      "base_price": 700.0,
-      "inclusive_voice": 1000,
-      "inclusive_sms": 500,
-      "inclusive_data": 25.0,
-      "rate_voice": 0.5,
-      "rate_sms": 0.2,
-      "rate_data": 10.0
-    }
+  "fixed_reservation_fee": 50.0,
+  "cancellation_fee_rate": 0.20,
+  "passengers": [
+    {"name": "Alice", "age": 65, "class": "AC_3Tier", "distance": 600, "category": "Senior", "is_cancelled": false},
+    {"name": "Bob", "age": 30, "class": "Sleeper", "distance": 250, "category": "Regular", "is_cancelled": true},
+    {"name": "Charlie", "age": 10, "class": "AC_1Tier", "distance": 800, "category": "Child", "is_cancelled": false}
   ]
 }
 
@@ -93,9 +73,38 @@ flowchart TD
 ## Sample Output
 
 ```json
-{"plan_name": "Basic Saver", "eligible": true, "base_price": 300.0, "excess_cost": 305.0, "total_cost": 605.0}
-{"plan_name": "Standard Flex", "eligible": true, "base_price": 450.0, "excess_cost": 30.0, "total_cost": 480.0}
-{"plan_name": "Unlimited Pro", "eligible": false, "reason": "Exceeds budget", "total_cost": null}
-Best Plan: {'plan_name': 'Standard Flex', 'eligible': True, 'base_price': 450.0, 'excess_cost': 30.0, 'total_cost': 480.0}
+{
+  "passenger_name": "Alice",
+  "class": "AC_3Tier",
+  "gross_fare": 1650.0,
+  "discount": 660.0,
+  "reservation_fee": 50.0,
+  "total_fare": 1040.0,
+  "is_cancelled": false,
+  "cancellation_charge": 0.0,
+  "net_payable": 1040.0
+}
+{
+  "passenger_name": "Bob",
+  "class": "Sleeper",
+  "gross_fare": 330.0,
+  "discount": 0.0,
+  "reservation_fee": 50.0,
+  "total_fare": 380.0,
+  "is_cancelled": true,
+  "cancellation_charge": 76.0,
+  "net_payable": 76.0
+}
+{
+  "passenger_name": "Charlie",
+  "class": "AC_1Tier",
+  "gross_fare": 4080.0,
+  "discount": 2040.0,
+  "reservation_fee": 50.0,
+  "total_fare": 2090.0,
+  "is_cancelled": false,
+  "cancellation_charge": 0.0,
+  "net_payable": 2090.0
+}
 
 ```
