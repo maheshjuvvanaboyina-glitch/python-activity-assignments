@@ -1,19 +1,24 @@
 ## Problem Statement
 
-Develop a campus event financial planning program that computes total event expenses by incorporating venue, equipment, transport, catering, and certificate costs. The program must account for total sponsorships and participant registration fees to determine net financial shortfalls and calculate the minimum registration count required for the event to break even.
+Develop a warehouse inventory reconciliation program that compares opening stock, incoming shipments, dispatched quantities, and reported closing stock across multiple products. The program must detect discrepancies, compute actual physical stock levels, identify shortages or surpluses, and calculate replenishment requirements based on minimum safety stock levels.
 
 ---
 
 ## Algorithm
 
-1. **Initialize Inputs:** Read venue cost, equipment cost, transport cost, catering cost per person, certificate cost per person, total sponsorship amount, and registration fee per participant.
-2. **Calculate Variable Costs:** Compute the variable cost per participant as the sum of catering cost per person and certificate cost per person.
-3. **Calculate Fixed Costs:** Compute total fixed costs as the sum of venue cost, equipment cost, and transport cost.
-4. **Calculate Net Fixed Cost:** Subtract the sponsorship amount from the total fixed costs.
-5. **Calculate Contribution Margin:** Determine the net contribution per participant by subtracting the variable cost per person from the registration fee per participant.
-6. **Check Feasibility:** If the contribution margin is less than or equal to zero, output that break-even is impossible with the current fee structure.
-7. **Calculate Break-Even Count:** Divide the net fixed cost by the contribution margin and round up to the nearest whole integer using a ceiling function.
-8. **Output Results:** Display fixed costs, variable costs per person, net fixed costs, and the minimum registration count required to break even.
+1. **Initialize Inputs:** Read inventory records containing product names, opening stock, incoming quantities, dispatched quantities, reported closing stock, and minimum safety stock requirements for each product.
+2. **Iterate Through Products:** For each product:
+* Calculate the expected closing stock using the formula:
+
+$$\text{Expected Closing Stock} = \text{Opening Stock} + \text{Incoming Quantities} - \text{Dispatched Quantities}$$
+
+
+* Compare the expected closing stock with the reported closing stock to detect any discrepancy (shortage or surplus).
+* Determine the replenishment requirement: if the reported/actual closing stock is below the minimum safety stock, calculate the exact quantity needed to restore stock to the safe threshold level.
+
+
+3. **Record Findings:** Store discrepancy status, variance values, and replenishment needs for each product.
+4. **Output Results:** Display a comprehensive inventory audit report detailing expected vs. actual stock, variances, and restocking requirements.
 
 ---
 
@@ -21,45 +26,82 @@ Develop a campus event financial planning program that computes total event expe
 
 ```mermaid
 flowchart TD
-    A([Start]) --> B[/Read Inputs: Venue, Equipment, Transport, Catering/Person, Certificate/Person, Sponsorship, Fee/Person/]
-    B --> C[Variable Cost / Person = Catering + Certificate]
-    C --> D[Fixed Costs = Venue + Equipment + Transport]
-    D --> E[Net Fixed Cost = Fixed Costs - Sponsorship]
-    E --> F[Contribution Margin = Fee / Person - Variable Cost / Person]
-    F --> G{Contribution Margin > 0?}
-    G -- No --> H[/Output: Break-even Impossible/]
-    G -- Yes --> I[Break-Even Count = ceil(Net Fixed Cost / Contribution Margin)]
-    I --> J[/Output: Fixed Costs, Net Fixed Cost, Min Break-Even Count, Total Cost/]
-    H --> K([End])
-    J --> K([End])
+    A([Start]) --> B[/Read Inventory Records: Opening, Incoming, Dispatched, Reported Closing, Safety Stock/]
+    B --> C{More Products?}
+    C -- Yes --> D[Get next product data]
+    D --> E[Expected Stock = Opening + Incoming - Dispatched]
+    E --> F[Discrepancy = Reported Closing - Expected Stock]
+    F --> G{Reported Closing < Safety Stock?}
+    G -- Yes --> H[Restock Needed = Safety Stock - Reported Closing]
+    G -- No --> I[Restock Needed = 0]
+    H --> J[Store reconciliation results]
+    I --> J
+    J --> C
+    C -- No --> K[/Output Inventory Audit Report and Discrepancies/]
+    K --> L([End])
 
 ```
 
 ---
 
 
-
 ---
 
 ## Sample Input
 
-* **Venue Cost:** 5000.0
-* **Equipment Cost:** 1500.0
-* **Transport Cost:** 800.0
-* **Catering Cost per Person:** 250.0
-* **Certificate Cost per Person:** 50.0
-* **Sponsorship Amount:** 3000.0
-* **Registration Fee per Participant:** 400.0
+* **Warehouse Stock Data:**
+```python
+{
+    "Laptop": {
+        "opening": 120,
+        "incoming": 50,
+        "dispatched": 80,
+        "reported_closing": 88,
+        "safety_stock": 50,
+    },
+    "Monitor": {
+        "opening": 200,
+        "incoming": 30,
+        "dispatched": 110,
+        "reported_closing": 115,
+        "safety_stock": 100,
+    },
+    "Keyboard": {
+        "opening": 350,
+        "incoming": 100,
+        "dispatched": 250,
+        "reported_closing": 190,
+        "safety_stock": 200,
+    },
+}
+
+```
+
+
 
 ---
 
 ## Sample Output
 
 ```text
-Fixed Costs: 7300.0
-Variable Cost Per Person: 300.0
-Net Fixed Cost: 4300.0
-Minimum Registration Count to Break Even: 43
-Total Event Cost at Break-Even: 20200.0
+Warehouse Inventory Audit Report:
+Product: Laptop
+  Expected Closing Stock: 90
+  Reported Closing Stock: 88
+  Stock Discrepancy: -2
+  Replenishment Required: 0
+----------------------------------------
+Product: Monitor
+  Expected Closing Stock: 120
+  Reported Closing Stock: 115
+  Stock Discrepancy: -5
+  Replenishment Required: 0
+----------------------------------------
+Product: Keyboard
+  Expected Closing Stock: 200
+  Reported Closing Stock: 190
+  Stock Discrepancy: -10
+  Replenishment Required: 10
+----------------------------------------
 
 ```
