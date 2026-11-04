@@ -18,8 +18,7 @@ Develop an automated hospital billing and patient classification system. The sys
 9. Display total bill, discount, payable amount, and status.
 10. Stop.
 
-## 3. Flowchart (Mermaid Code)
-
+## 3. Flowchart 
 ``` mermaid
 flowchart TD
     A([Start]) --> B[/Enter Patient Name and Category/]
